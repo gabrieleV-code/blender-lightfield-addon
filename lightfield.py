@@ -217,9 +217,12 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
         description='Target directory for blender output',
     )
 
+<<<<<<< HEAD
     current_fading_value = 1
     fading_input_value = None
 
+=======
+>>>>>>> 254fc6b8551255ed67b8be1ed051b0ea6984701b
     def construct(self):
         """
         Construct the lightfield.
@@ -416,6 +419,7 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
         :return: Nothing.
         """
         scene = bpy.context.scene
+<<<<<<< HEAD
 
         # Enable the use of nodes in the compositor
         tree = scene.node_tree
@@ -439,6 +443,8 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
         tree.links.new(render_layer_node.outputs['Image'], bright_contrast_node.inputs['Image'])
         tree.links.new(bright_contrast_node.outputs['Image'], composite_node.inputs['Image'])
 
+=======
+>>>>>>> 254fc6b8551255ed67b8be1ed051b0ea6984701b
         scene.render.resolution_percentage = 100
         scene.render.resolution_x = self.res_x
         scene.render.resolution_y = self.res_y
@@ -561,15 +567,22 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
 
         # Render all views for a time-frame.
         for pos in self.position_generator():
+<<<<<<< HEAD
             #self.fading_input_value.inputs['Value'].default_value = self.set_fading_render(pos.x,pos.z,10)
             bpy.context.view_layer.update()
+=======
+>>>>>>> 254fc6b8551255ed67b8be1ed051b0ea6984701b
             self.render_view(pos, output_directory, extension)
 
     def render_view(self, cam_pos, output_directory, extension):
         # TODO: setup all parameters
         self.obj_camera.location = cam_pos.location()
         self.obj_camera.rotation_euler = cam_pos.rotation()
+<<<<<<< HEAD
         print("\n"+str(cam_pos)+"\n")
+=======
+
+>>>>>>> 254fc6b8551255ed67b8be1ed051b0ea6984701b
         frame_number = bpy.context.scene.frame_current
         bpy.ops.lightfield.export_config_append(filename=cam_pos.name, frame_number=frame_number)
 
@@ -584,12 +597,15 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
             else:
                 print("File %s already exists. Skipping." % filepath)
 
+<<<<<<< HEAD
     def get_matrix_center(self):
         return NotImplementedError()
     
     def set_fading_render(self):
         return NotImplementedError
 
+=======
+>>>>>>> 254fc6b8551255ed67b8be1ed051b0ea6984701b
     def position_generator(self):
         """
         Generator that generates camera positions.
