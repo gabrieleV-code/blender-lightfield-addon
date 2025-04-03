@@ -95,3 +95,29 @@ class LightfieldPlane(LightfieldPropertyGroup):
                               0.0,
                               0.5 - y * base_y,
                               alpha=0.5*math.pi)
+    
+    # Function to calculate the normalized distance from the camera matrix center
+    def normalized_distance_from_center(self,x, y):
+        # Calculate Euclidean distance from the center
+        center_x = (self.num_cams_x - 1) / 2
+        center_y = (self.num_cams_y - 1) / 2
+        max_distance = math.sqrt(center_x ** 2 + center_y ** 2)
+        distance = math.sqrt((x) ** 2 + (y) ** 2)
+        # Normalize the distance so the farthest point gets 0.0 and the center gets 1.0
+        return distance
+    
+    def set_fading_render(self,x,y,std_dev,y_limit=1):
+        """ distance =  math.sqrt((x) ** 2 + (y) ** 2)
+        gaussian_var = 2*math.pi*(std_dev**2)
+        intensity = 1/gaussian_var * math.exp(-1*distance/(2*std_dev**2)) """
+        distance = (math.sqrt((x) ** 2 + (y) ** 2)/math.sqrt(self.num_cams_y**2+self.num_cams_x**2))
+        print("distance: "+str(distance))
+        intensity = 0.5-(distance) #/ (max_distance ** 2)
+        if intensity<0.001:
+            intensity=0
+        intensity = intensity**2
+        print("Position: "+str(x) +" "+str(y))
+        print("Intensity: " + str(intensity))
+        #input_ = input("test intensity")
+        return min(y_limit, intensity) # Ensure the intensity does not go above 1.0
+

@@ -217,6 +217,9 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
         description='Target directory for blender output',
     )
 
+    current_fading_value = 1
+    fading_input_value = None
+
     def construct(self):
         """
         Construct the lightfield.
@@ -413,6 +416,29 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
         :return: Nothing.
         """
         scene = bpy.context.scene
+
+        # Enable the use of nodes in the compositor
+        tree = scene.node_tree
+
+        # Clear any existing nodes
+        for node in tree.nodes:
+            tree.nodes.remove(node)
+
+        # Create render layer node
+        render_layer_node = tree.nodes.new('CompositorNodeRLayers')
+
+        # Create a Bright/Contrast node
+        bright_contrast_node = tree.nodes.new('CompositorNodeHueSat')
+        bright_contrast_node.inputs['Value'].default_value = 1  # Adjust brightness here
+        self.fading_input_value = bright_contrast_node #bright_contrast_node.inputs['Value']
+
+        # Create a Composite node (output node)
+        composite_node = tree.nodes.new('CompositorNodeComposite')
+
+        # Link the nodes together
+        tree.links.new(render_layer_node.outputs['Image'], bright_contrast_node.inputs['Image'])
+        tree.links.new(bright_contrast_node.outputs['Image'], composite_node.inputs['Image'])
+
         scene.render.resolution_percentage = 100
         scene.render.resolution_x = self.res_x
         scene.render.resolution_y = self.res_y
@@ -480,6 +506,49 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
         rb.image_settings.file_format = old_file_format
         rb.image_settings.use_zbuffer = old_use_zbuffer
 
+    def render_sample():
+        scene = bpy.context.scene
+        rb = scene.render
+
+        # Store now to reset later.
+        old_camera = scene.camera
+
+        old_percentage = rb.resolution_percentage
+        old_render_borders = [rb.border_min_x, rb.border_max_x, rb.border_min_y, rb.border_max_y]
+        old_render_region = rb.use_border
+        old_crop_to_region = rb.use_crop_to_border
+
+        old_output = rb.filepath
+        old_file_extension = rb.use_file_extension
+
+        old_file_format = rb.image_settings.file_format
+        old_use_zbuffer = rb.image_settings.use_zbuffer
+
+        # Set some properties beforehand:
+        self.set_render_properties()
+        rb.use_file_extension = False
+        extension = self.get_extension()
+
+        # Render frames if sequence, only 1 frame if still.
+        bpy.ops.lightfield.export_config(frame_number=self.sequence_start)
+        bpy.context.scene.frame_current = self.sequence_end
+        output_directory = self.get_output_image_directory()
+        self.render_time_frame(output_directory, extension)
+
+        # Reset parameters
+        bpy.context.scene.camera = old_camera
+
+        rb.resolution_percentage = old_percentage
+        rb.border_min_x, rb.border_max_x, rb.border_min_y, rb.border_max_y = old_render_borders
+        rb.use_border = old_render_region
+        rb.use_crop_to_border = old_crop_to_region
+
+        rb.filepath = old_output
+        rb.use_file_extension = old_file_extension
+
+        rb.image_settings.file_format = old_file_format
+        rb.image_settings.use_zbuffer = old_use_zbuffer
+
     def render_time_frame(self, output_directory, extension):
         """
         Render a single frame and put the result in output directory.
@@ -492,13 +561,15 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
 
         # Render all views for a time-frame.
         for pos in self.position_generator():
+            #self.fading_input_value.inputs['Value'].default_value = self.set_fading_render(pos.x,pos.z,10)
+            bpy.context.view_layer.update()
             self.render_view(pos, output_directory, extension)
 
     def render_view(self, cam_pos, output_directory, extension):
         # TODO: setup all parameters
         self.obj_camera.location = cam_pos.location()
         self.obj_camera.rotation_euler = cam_pos.rotation()
-
+        print("\n"+str(cam_pos)+"\n")
         frame_number = bpy.context.scene.frame_current
         bpy.ops.lightfield.export_config_append(filename=cam_pos.name, frame_number=frame_number)
 
@@ -512,6 +583,12 @@ class LightfieldPropertyGroup(bpy.types.PropertyGroup):
                 bpy.ops.render.render(write_still=True)
             else:
                 print("File %s already exists. Skipping." % filepath)
+
+    def get_matrix_center(self):
+        return NotImplementedError()
+    
+    def set_fading_render(self):
+        return NotImplementedError
 
     def position_generator(self):
         """
