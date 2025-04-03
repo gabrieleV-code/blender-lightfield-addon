@@ -95,7 +95,6 @@ class LightfieldPlane(LightfieldPropertyGroup):
                               0.0,
                               0.5 - y * base_y,
                               alpha=0.5*math.pi)
-<<<<<<< HEAD
     
     # Function to calculate the normalized distance from the camera matrix center
     def normalized_distance_from_center(self,x, y):
@@ -122,5 +121,3 @@ class LightfieldPlane(LightfieldPropertyGroup):
         #input_ = input("test intensity")
         return min(y_limit, intensity) # Ensure the intensity does not go above 1.0
 
-=======
->>>>>>> 254fc6b8551255ed67b8be1ed051b0ea6984701b
